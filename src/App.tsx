@@ -141,8 +141,8 @@ export default function App() {
                 <div 
                   className="grid gap-[1px] shadow-2xl rounded-xl overflow-hidden border-4 border-[var(--line)] bg-[#e8d8ca]" 
                   style={{ 
-                    width: 'min(85vw - 12rem, 85vh)',
-                    height: 'min(85vw - 12rem, 85vh)',
+                    width: 'min(92vw - 10rem, 92vh)',
+                    height: 'min(92vw - 10rem, 92vh)',
                     gridTemplateColumns: `repeat(${totalStudents + 1}, 1fr)`,
                     gridTemplateRows: `repeat(${totalStudents + 1}, 1fr)`
                   }}
