@@ -5,13 +5,6 @@ import { Check, User, Users, Trophy, LayoutGrid, List, RotateCcw } from 'lucide-
 const TOTAL_STUDENTS = 22;
 const STUDENTS = Array.from({ length: TOTAL_STUDENTS }, (_, i) => i + 1);
 
-interface Match {
-  id: string;
-  student1: number;
-  student2: number;
-  completed: number;
-}
-
 const LOCAL_MATCHES_KEY = 'match_tracker_data';
 
 export default function App() {
@@ -61,81 +54,23 @@ export default function App() {
   const resetMatches = async () => {
     console.log("Reset button clicked");
     if (window.confirm('Reset all match data?')) {
-      let resetOnServer = false;
-
-      try {
-        console.log("Sending reset request to server...");
-        const res = await fetch('/api/matches/reset', { method: 'POST' });
-        if (res.ok) {
-          resetOnServer = true;
-          console.log("Reset successful on server");
-        } else {
-          console.error("Reset failed on server", res.status);
-        }
-      } catch (err) {
-        console.error("Failed to reset matches", err);
-      }
-
       setMatches({});
       localStorage.removeItem(LOCAL_MATCHES_KEY);
-
-      if (resetOnServer) {
-        alert('Matches have been reset.');
-      } else {
-        alert('Server reset failed, but local matches have been reset.');
-      }
+      alert('Matches have been reset.');
     }
   };
 
   const fetchMatches = async () => {
     const localMatches = loadLocalMatches();
     setMatches(localMatches);
-
-    let mergedFromServer = false;
-
-    try {
-      console.log("Fetching matches from server...");
-      const res = await fetch('/api/matches');
-      if (res.ok) {
-        const data: Match[] = await res.json();
-        console.log("Matches fetched:", data.length);
-        const matchMap: Record<string, boolean> = {};
-        data.forEach(m => {
-          if (m.completed) matchMap[m.id] = true;
-        });
-
-        const hasLocal = Object.keys(localMatches).length > 0;
-        const hasServer = Object.keys(matchMap).length > 0;
-
-        if (!hasLocal && hasServer) {
-          setMatches(matchMap);
-          saveLocalMatches(matchMap);
-          mergedFromServer = true;
-        } else if (hasLocal && hasServer) {
-          const mergedMatches = { ...matchMap, ...localMatches };
-          setMatches(mergedMatches);
-          saveLocalMatches(mergedMatches);
-          mergedFromServer = true;
-        }
-      } else {
-        console.warn("Failed to fetch matches from server:", res.status);
-      }
-    } catch (err) {
-      console.error("Failed to fetch matches", err);
-    } finally {
-      if (!mergedFromServer) {
-        setMatches(localMatches);
-      }
-
-      setLoading(false);
-    }
+    setLoading(false);
   };
 
   const updateStudentName = (id: number, name: string) => {
     setStudentNames(prev => ({ ...prev, [id]: name }));
   };
 
-  const toggleMatch = async (s1: number, s2: number) => {
+  const toggleMatch = (s1: number, s2: number) => {
     if (s1 === s2 || s1 < 1 || s1 > totalStudents || s2 < 1 || s2 > totalStudents) return;
     
     const p1 = Math.min(s1, s2);
@@ -148,20 +83,6 @@ export default function App() {
       saveLocalMatches(next);
       return next;
     });
-
-    try {
-      const res = await fetch('/api/matches/toggle', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ student1: p1, student2: p2 })
-      });
-
-      if (!res.ok) {
-        console.warn("Failed to sync toggle to server:", res.status);
-      }
-    } catch (err) {
-      console.error("Failed to toggle match", err);
-    }
   };
 
   const studentStats = useMemo(() => {
