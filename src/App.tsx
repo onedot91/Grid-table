@@ -148,11 +148,11 @@ export default function App() {
                   }}
                 >
                   {/* Header Row */}
-                  <div className="flex items-center justify-center bg-[#fffaf3] border-b-2 border-r-2 border-[var(--line)]"></div>
+                  <div className="flex items-center justify-center bg-[#f2e4d6] border-b-2 border-r-2 border-[var(--line)]"></div>
                   {students.map(s => (
                     <div 
                       key={s} 
-                      className={`flex items-center justify-center text-[10px] md:text-sm font-black transition-all border-b-2 ${s % 5 === 0 ? 'border-r-2 border-[#cfb8a6]' : 'border-r border-[#eadccf]'} ${hoveredCell?.s2 === s ? 'text-[var(--scarf-deep)] bg-[#dbead8] scale-110 z-10' : 'text-[#907463] bg-[#fffaf3]'}`}
+                      className={`flex items-center justify-center text-[10px] md:text-sm transition-all border-b-2 ${s % 5 === 0 ? 'border-r-2 border-[#cfb8a6]' : 'border-r border-[#eadccf]'} ${hoveredCell?.s2 === s ? 'text-[var(--scarf-deep)] bg-[#dbead8] scale-110 z-10 font-black' : s % 5 === 0 ? 'text-[#6f5647] bg-[#f2e4d6] font-extrabold' : 'text-[#907463] bg-[#f8efe6] font-black'}`}
                       title={studentNames[s] || `Student ${s}`}
                     >
                       {s}
@@ -163,7 +163,7 @@ export default function App() {
                   {students.map(s1 => (
                     <React.Fragment key={s1}>
                       <div 
-                        className={`flex items-center justify-center text-[10px] md:text-sm font-black transition-all border-r-2 ${s1 % 5 === 0 ? 'border-b-2 border-[#cfb8a6]' : 'border-b border-[#eadccf]'} ${hoveredCell?.s1 === s1 ? 'text-[var(--scarf-deep)] bg-[#dbead8] scale-110 z-10' : 'text-[#907463] bg-[#fffaf3]'}`}
+                        className={`flex items-center justify-center text-[10px] md:text-sm transition-all border-r-2 ${s1 % 5 === 0 ? 'border-b-2 border-[#cfb8a6]' : 'border-b border-[#eadccf]'} ${hoveredCell?.s1 === s1 ? 'text-[var(--scarf-deep)] bg-[#dbead8] scale-110 z-10 font-black' : s1 % 5 === 0 ? 'text-[#6f5647] bg-[#f2e4d6] font-extrabold' : 'text-[#907463] bg-[#f8efe6] font-black'}`}
                         title={studentNames[s1] || `Student ${s1}`}
                       >
                         {s1}
@@ -204,7 +204,6 @@ export default function App() {
                               ${(isRowHighlighted || isColHighlighted) && !isDone ? 'bg-[#edf5eb]/40 z-10' : ''}
                               ${hasRightGuide ? 'border-r-[#cfb8a6] border-r-2' : ''}
                               ${hasBottomGuide ? 'border-b-[#cfb8a6] border-b-2' : ''}`}
-                            title={`${studentNames[s1] || `S${s1}`} vs ${studentNames[s2] || `S${s2}`}`}
                           />
                         );
                       })}
