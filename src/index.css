@@ -1,1 +1,30 @@
 @import "tailwindcss";
+
+:root {
+  --bg: #f6efe5;
+  --bg-soft: #fdf8f2;
+  --fur: #c79d82;
+  --fur-deep: #a3795e;
+  --scarf: #5e8d57;
+  --scarf-deep: #3f6840;
+  --garlic: #f3ead8;
+  --ink: #2f241e;
+  --line: #dfccb9;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 15% 10%, #fff8ef 0%, transparent 40%),
+    linear-gradient(145deg, #f7efe4 0%, #efe1d2 100%);
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--fur) #f4e8dc;
+}
