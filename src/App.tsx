@@ -12,6 +12,8 @@ interface Match {
   completed: number;
 }
 
+const LOCAL_MATCHES_KEY = 'match_tracker_data';
+
 export default function App() {
   const [totalStudents, setTotalStudents] = useState(22);
   const [matches, setMatches] = useState<Record<string, boolean>>({});
@@ -40,30 +42,57 @@ export default function App() {
     localStorage.setItem('match_tracker_names', JSON.stringify(studentNames));
   }, [studentNames]);
 
+  const loadLocalMatches = (): Record<string, boolean> => {
+    const saved = localStorage.getItem(LOCAL_MATCHES_KEY);
+    if (!saved) return {};
+
+    try {
+      return JSON.parse(saved);
+    } catch (err) {
+      console.error("Failed to parse local matches", err);
+      return {};
+    }
+  };
+
+  const saveLocalMatches = (nextMatches: Record<string, boolean>) => {
+    localStorage.setItem(LOCAL_MATCHES_KEY, JSON.stringify(nextMatches));
+  };
+
   const resetMatches = async () => {
     console.log("Reset button clicked");
     if (window.confirm('Reset all match data?')) {
+      let resetOnServer = false;
+
       try {
         console.log("Sending reset request to server...");
         const res = await fetch('/api/matches/reset', { method: 'POST' });
         if (res.ok) {
+          resetOnServer = true;
           console.log("Reset successful on server");
-          setMatches({});
-          // Clear any potential stale local data
-          localStorage.removeItem('match_tracker_data');
-          alert('Matches have been reset.');
         } else {
           console.error("Reset failed on server", res.status);
-          alert('Failed to reset matches on server.');
         }
       } catch (err) {
         console.error("Failed to reset matches", err);
-        alert('Error connecting to server.');
+      }
+
+      setMatches({});
+      localStorage.removeItem(LOCAL_MATCHES_KEY);
+
+      if (resetOnServer) {
+        alert('Matches have been reset.');
+      } else {
+        alert('Server reset failed, but local matches have been reset.');
       }
     }
   };
 
   const fetchMatches = async () => {
+    const localMatches = loadLocalMatches();
+    setMatches(localMatches);
+
+    let mergedFromServer = false;
+
     try {
       console.log("Fetching matches from server...");
       const res = await fetch('/api/matches');
@@ -74,11 +103,30 @@ export default function App() {
         data.forEach(m => {
           if (m.completed) matchMap[m.id] = true;
         });
-        setMatches(matchMap);
+
+        const hasLocal = Object.keys(localMatches).length > 0;
+        const hasServer = Object.keys(matchMap).length > 0;
+
+        if (!hasLocal && hasServer) {
+          setMatches(matchMap);
+          saveLocalMatches(matchMap);
+          mergedFromServer = true;
+        } else if (hasLocal && hasServer) {
+          const mergedMatches = { ...matchMap, ...localMatches };
+          setMatches(mergedMatches);
+          saveLocalMatches(mergedMatches);
+          mergedFromServer = true;
+        }
+      } else {
+        console.warn("Failed to fetch matches from server:", res.status);
       }
     } catch (err) {
       console.error("Failed to fetch matches", err);
     } finally {
+      if (!mergedFromServer) {
+        setMatches(localMatches);
+      }
+
       setLoading(false);
     }
   };
@@ -95,19 +143,24 @@ export default function App() {
     const id = `${p1}-${p2}`;
     console.log("Toggling match:", id);
 
-    // Optimistic update
-    setMatches(prev => ({ ...prev, [id]: !prev[id] }));
+    setMatches(prev => {
+      const next = { ...prev, [id]: !prev[id] };
+      saveLocalMatches(next);
+      return next;
+    });
 
     try {
-      await fetch('/api/matches/toggle', {
+      const res = await fetch('/api/matches/toggle', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ student1: p1, student2: p2 })
       });
+
+      if (!res.ok) {
+        console.warn("Failed to sync toggle to server:", res.status);
+      }
     } catch (err) {
       console.error("Failed to toggle match", err);
-      // Rollback on error
-      setMatches(prev => ({ ...prev, [id]: !prev[id] }));
     }
   };
 
