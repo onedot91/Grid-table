@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Check, User, Users, LayoutGrid, RotateCcw } from 'lucide-react';
 
@@ -30,6 +30,7 @@ export default function App() {
   const [hoveredCell, setHoveredCell] = useState<{ s1: number; s2: number } | null>(null);
   const [studentNames, setStudentNames] = useState<Record<number, string>>({});
   const [mascotMissing, setMascotMissing] = useState(false);
+  const [quickEntry, setQuickEntry] = useState('');
 
   const students = useMemo(() => Array.from({ length: totalStudents }, (_, i) => i + 1), [totalStudents]);
 
@@ -102,6 +103,47 @@ export default function App() {
       saveLocalMatches(next);
       return next;
     });
+  };
+
+  const checkMatch = (s1: number, s2: number) => {
+    if (s1 === s2 || s1 < 1 || s1 > totalStudents || s2 < 1 || s2 > totalStudents) return;
+
+    const p1 = Math.min(s1, s2);
+    const p2 = Math.max(s1, s2);
+    const id = `${p1}-${p2}`;
+
+    setMatches(prev => {
+      if (prev[id]) return prev;
+      const next = { ...prev, [id]: true };
+      saveLocalMatches(next);
+      return next;
+    });
+  };
+
+  const quickInput = useMemo(() => {
+    const value = quickEntry.trim();
+    if (!value) return { status: 'empty' as const, first: null, second: null, pairId: null };
+
+    // Separator is mandatory so values like "12" are not confused with "1,2".
+    const match = value.match(/^(\d+)\s*([,\s:/-])\s*(\d+)$/);
+    if (!match) return { status: 'format' as const, first: null, second: null, pairId: null };
+
+    const first = Number.parseInt(match[1], 10);
+    const second = Number.parseInt(match[3], 10);
+    if (first === second) return { status: 'same' as const, first, second, pairId: null };
+    if (first < 1 || first > totalStudents || second < 1 || second > totalStudents) {
+      return { status: 'range' as const, first, second, pairId: null };
+    }
+
+    const pairId = `${Math.min(first, second)}-${Math.max(first, second)}`;
+    const already = Boolean(matches[pairId]);
+    return { status: already ? ('already' as const) : ('ready' as const), first, second, pairId };
+  }, [quickEntry, totalStudents, matches]);
+
+  const handleQuickCheck = () => {
+    if (quickInput.status !== 'ready' && quickInput.status !== 'already') return;
+    checkMatch(quickInput.first!, quickInput.second!);
+    setHoveredCell({ s1: quickInput.first!, s2: quickInput.second! });
   };
 
   const studentStats = useMemo(() => {
@@ -446,6 +488,47 @@ export default function App() {
                 Add mascot file: /public/mascot-working-bear.png
               </div>
             )}
+            </div>
+          </section>
+
+          <section className="pt-1">
+            <div className="w-full rounded-2xl border border-[var(--line)] bg-[#fffaf3]/95 p-3 shadow-sm">
+              <p className="mb-2 text-[11px] font-black tracking-wide text-[#907463]">빠른 체크</p>
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  value={quickEntry}
+                  onChange={(e) => setQuickEntry(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleQuickCheck();
+                      setQuickEntry('');
+                    }
+                  }}
+                  placeholder="예: 12 1 또는 12,1"
+                  className="w-full rounded-lg border border-[#eadccf] bg-white px-2 py-1.5 text-sm font-bold text-[var(--ink)] focus:border-[#cfb8a6] focus:outline-none"
+                />
+                <button
+                  onClick={handleQuickCheck}
+                  disabled={quickInput.status !== 'ready' && quickInput.status !== 'already'}
+                  className={`w-full rounded-lg py-2 text-sm font-black transition-all ${
+                    quickInput.status === 'ready' || quickInput.status === 'already'
+                      ? 'bg-[var(--scarf)] text-white hover:bg-[var(--scarf-deep)]'
+                      : 'bg-[#eadccf] text-[#907463] cursor-not-allowed'
+                  }`}
+                >
+                  Enter 또는 체크
+                </button>
+                <p className="text-[11px] font-bold text-[#907463]">
+                  {quickInput.status === 'empty' && '숫자 2개를 구분자와 함께 입력하세요'}
+                  {quickInput.status === 'format' && '형식: 12 1 또는 12,1 (구분자 필수)'}
+                  {quickInput.status === 'same' && '같은 번호는 선택할 수 없어요'}
+                  {quickInput.status === 'range' && `1~${totalStudents} 범위로 입력하세요`}
+                  {quickInput.status === 'already' && '이미 체크된 조합이에요'}
+                  {quickInput.status === 'ready' && '입력한 조합을 체크할 수 있어요'}
+                </p>
+              </div>
             </div>
           </section>
           </div>
