@@ -521,7 +521,7 @@ export default function App() {
                   Enter 또는 체크
                 </button>
                 <p className="text-[11px] font-bold text-[#907463]">
-                  {quickInput.status === 'empty' && '숫자 2개를 구분자와 함께 입력하세요'}
+                  {quickInput.status === 'empty' && '숫자 2개를 구분자와 함께 입력'}
                   {quickInput.status === 'format' && '형식: 12 1 또는 12,1 (구분자 필수)'}
                   {quickInput.status === 'same' && '같은 번호는 선택할 수 없어요'}
                   {quickInput.status === 'range' && `1~${totalStudents} 범위로 입력하세요`}
