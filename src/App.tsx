@@ -6,9 +6,23 @@ const TOTAL_STUDENTS = 22;
 const STUDENTS = Array.from({ length: TOTAL_STUDENTS }, (_, i) => i + 1);
 
 const LOCAL_MATCHES_KEY = 'match_tracker_data';
+const LOCAL_STUDENT_COUNT_KEY = 'match_tracker_total_students';
+const MIN_STUDENTS = 2;
+const MAX_STUDENTS = 30;
+
+const clampStudentCount = (value: number) => Math.max(MIN_STUDENTS, Math.min(MAX_STUDENTS, value));
+
+const loadSavedStudentCount = () => {
+  const raw = localStorage.getItem(LOCAL_STUDENT_COUNT_KEY);
+  if (!raw) return TOTAL_STUDENTS;
+
+  const parsed = Number.parseInt(raw, 10);
+  if (Number.isNaN(parsed)) return TOTAL_STUDENTS;
+  return clampStudentCount(parsed);
+};
 
 export default function App() {
-  const [totalStudents, setTotalStudents] = useState(22);
+  const [totalStudents, setTotalStudents] = useState(() => loadSavedStudentCount());
   const [matches, setMatches] = useState<Record<string, boolean>>({});
   const [selectedStudent, setSelectedStudent] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'personal'>('grid');
@@ -35,6 +49,10 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('match_tracker_names', JSON.stringify(studentNames));
   }, [studentNames]);
+
+  useEffect(() => {
+    localStorage.setItem(LOCAL_STUDENT_COUNT_KEY, String(totalStudents));
+  }, [totalStudents]);
 
   const loadLocalMatches = (): Record<string, boolean> => {
     const saved = localStorage.getItem(LOCAL_MATCHES_KEY);
@@ -374,18 +392,18 @@ export default function App() {
           <section className="space-y-3">
             <div className="flex items-center gap-4 bg-[#fffaf3] p-3 rounded-2xl border border-[var(--line)] shadow-sm">
               <button 
-                onClick={() => setTotalStudents(prev => Math.max(2, prev - 1))}
+                onClick={() => setTotalStudents(prev => clampStudentCount(prev - 1))}
                 className="w-8 h-8 rounded-lg bg-[#f3e7da] flex items-center justify-center text-[#907463] hover:bg-[#f1e4d8] transition-colors"
               >-</button>
               <input 
                 type="number" 
                 value={totalStudents}
-                onChange={(e) => setTotalStudents(Math.max(2, Math.min(30, parseInt(e.target.value) || 2)))}
+                onChange={(e) => setTotalStudents(clampStudentCount(Number.parseInt(e.target.value, 10) || MIN_STUDENTS))}
                 className="flex-1 bg-transparent border-none focus:ring-0 font-black text-xl text-[var(--ink)] text-center p-0"
-                min="2" max="30"
+                min={MIN_STUDENTS} max={MAX_STUDENTS}
               />
               <button 
-                onClick={() => setTotalStudents(prev => Math.min(30, prev + 1))}
+                onClick={() => setTotalStudents(prev => clampStudentCount(prev + 1))}
                 className="w-8 h-8 rounded-lg bg-[#f3e7da] flex items-center justify-center text-[#907463] hover:bg-[#f1e4d8] transition-colors"
               >+</button>
             </div>
